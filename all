@@ -175,15 +175,13 @@ with open('RNASeq_Analysis_Report.txt', 'w') as f:
 print("Analysis complete. Results saved to 'differentially_expressed_genes.csv' and 'RNASeq_Analysis_Report.txt'.")
 
 
-##################################### Protein Structure Prediction. Task: Predict the 3D structure of a given protein sequence using homology modeling or threading techniques #################
+################## Protein Structure Prediction. Task: Predict the 3D structure of a given protein sequence ##############
 
 
 
 
 
-
-
-############################ Perform molecular docking simulations to predict the binding affinity between a protein target and a small molecule ligand #############################
+######### Perform molecular docking simulations to predict the binding affinity between a protein target and a small molecule ligand ##########
 
 
 import numpy as np
@@ -244,7 +242,7 @@ plt.title('Confusion Matrix')
 plt.show()
 
 
-############################### Write a program for pre-processing of a text document such as stop word removal, stemming. ##########################################
+############################### Write a program for pre-processing of a text document such as stop word removal, stemming. ####################
 
 import nltk
 from nltk.corpus import stopwords
@@ -323,7 +321,7 @@ else:
 
 
 
-############################# Write a program to construct a Bayesian network considering medical data. ###############################################
+############################# Write a program to construct a Bayesian network considering medical data. #################################
 
 import pandas as pd
 from pgmpy.models import BayesianNetwork
@@ -369,13 +367,85 @@ q4 = HeartDiseasetest_infer.query(variables=['heartdisease'], evidence={'cholest
 print(q4)
 
 
-############################################### Implement e-mail spam filtering using text classification algorithm with appropriate dataset #######################################
+################## Implement e-mail spam filtering using text classification algorithm with appropriate dataset #########################
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.preprocessing import LabelEncoder
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+
+df = pd.read_csv("email_spam (1)-IR.csv")
+
+df.head()
+
+df.isnull().sum()
+
+df.drop_duplicates(inplace=True)
+print("Duplicates removed.")
+
+le = LabelEncoder()
+df['spam'] = le.fit_transform(df['type'])
+
+df['text'] = df['text'].replace("\n", "", regex=True)
+
+df.head()
+
+x_train, x_test, y_train, y_test = train_test_split(df['text'], df['spam'], test_size=0.1, random_state=42)
+
+
+vectorizer = CountVectorizer()
+x_train_count = vectorizer.fit_transform(x_train.values)
+x_test_count = vectorizer.transform(x_test.values)
+
+
+knn_model = KNeighborsClassifier(n_neighbors=3)
+knn_model.fit(x_train_count, y_train)
+
+accuracy = knn_model.score(x_test_count, y_test)
+print(f"Model accuracy: {accuracy }")
+
+email = ['''Model Casting Call
+Thank you for taking the time to register for the Anambra Fashion Expo 2023 Model Call. We are thrilled to have received your information and are excited to review your submission.
+
+Our team will be carefully reviewing all of the applications we receive over the
+next few weeks
+
+Have you followed us on our social media handles?
+
+Remember, one of the prerequisites for qualification is to follow all our social
+media accounts and share all our content using the hashtag #AFE2023
+
+You can follow us on Facebook, Instagram, and Twitter.
+
+Facebook: https://facebook.com/AnambraFashionExpo2023
+Instagram: https://instagram.com/anambrafashionexpo
+Twitter: https://twitter.com/anambrafashion
+
+In the meantime, we encourage you to stay connected and keep an eye out for
+updates about the event. We will be posting!
+
+Note: Create your personalized profile picture (DP) for the Model Casting of the Anambra Fashion Expo 2023
+
+You can create your DP using the following link: https://getdp.co/afe2023
+
+Best Regards,
+
+Anambra Fashion Expo 2023 Team ''']
+new_email_count = vectorizer.transform(email)
+prediction = knn_model.predict(new_email_count)
+
+if prediction[0] == 1:
+    print("The email is Spam.")
+else:
+    print("The email is Not Spam.")
 
 
 
 
 
-################################  Implement Agglomerative hierarchical clustering algorithm using appropriate dataset. #######################################
+#####################  Implement Agglomerative hierarchical clustering algorithm using appropriate dataset. ########################
 
 import numpy as np
 import pandas as pd
