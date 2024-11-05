@@ -1,0 +1,420 @@
+#################################### Analyse a given DNA sequence and perform basic sequence #############################################
+
+#Read the DNA sequence from file
+with open('dna_sequence-BI.txt', 'r') as file:
+    dna_sequence = file.read().strip()
+
+dna_sequence
+
+# 1. Function to calculate GC content
+def calculate_gc_content(sequence):
+    g_count = sequence.count('G')
+    c_count = sequence.count('C')
+    gc_content = (g_count + c_count) / len(sequence) * 100
+    return gc_content
+
+# 2. Function to find motifs in the DNA sequence
+def find_motifs(sequence, motif):
+    positions = []
+    for i in range(len(sequence) - len(motif) + 1):
+        if sequence[i:i + len(motif)] == motif:
+            positions.append(i)
+    return positions
+
+# 3. Function to identify coding regions (start and stop codons)
+def find_coding_regions(sequence):
+    start_codon = "ATG"
+    stop_codons = ["TAA", "TAG", "TGA"]
+    coding_regions = []
+
+    i = 0
+    while i < len(sequence) - 2:
+        codon = sequence[i:i + 3]
+        if codon == start_codon:
+            # Find the next stop codon after the start codon
+            for j in range(i + 3, len(sequence) - 2, 3):
+                stop_codon = sequence[j:j + 3]
+                if stop_codon in stop_codons:
+                    coding_regions.append((i, j + 3))  # coding region from start to the end of stop codon
+                    i = j + 3
+                    break
+        i += 3
+
+    return coding_regions
+
+# Calculate results
+gc_content = calculate_gc_content(dna_sequence)
+motif_positions = find_motifs(dna_sequence, "ATG")
+coding_regions = find_coding_regions(dna_sequence)
+
+
+
+print(f"GC content : {gc_content}%")
+
+print(f"Motif ATG found at positions : {motif_positions}")
+
+if coding_regions:
+    print("Coding regions : ")
+    for start, end in coding_regions:
+        print(f"Start: {start}, End: {end}")
+else:
+    print("No coding regions found in the sequence.")
+
+
+
+############################# RNA-Seq Data Analysis. Task: Analyze a provided RNA-Seq dataset and perform differential  gene expression analysis. ###################################
+
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Step 1: Simulate RNA-Seq Dataset
+np.random.seed(42)
+
+genes = [f'gene_{i}' for i in range(1, 101)]
+conditions = ['Control', 'Treatment']
+
+samples = [f'sample_{i}' for i in range(1, 11)]
+data = np.random.poisson(lam=20, size=(100, 10))
+
+# Simulate differential expression for some genes in Treatment condition
+data[0:5, 5:10] += 15
+
+
+# Create DataFrame
+df = pd.DataFrame(data, index=genes, columns=samples)
+
+metadata = pd.DataFrame({'sample': samples,
+                          'condition': ['Control']*5 + ['Treatment']*5})
+
+
+# Step 2: Normalize the Data
+df_norm = df.div(df.sum(axis=0), axis=1) * 10**6
+df_log = np.log2(df_norm + 1)
+
+def differential_expression(df, metadata):
+    results = []
+    for gene in df.index:
+        y = df_log.loc[gene].values
+        X = pd.get_dummies(metadata['condition'], drop_first=True)
+        # The line below was modified to cast the DataFrame to float
+        X = sm.add_constant(X.astype(float))
+        model = sm.OLS(y, X).fit()
+        p_value = model.pvalues[1]
+        results.append({'gene': gene, 'p_value': p_value})
+
+    results_df = pd.DataFrame(results)
+    results_df['adjusted_p_value'] = sm.stats.multipletests(results_df['p_value'], method='fdr_bh')[1]
+
+    return results_df
+
+
+# Call the differential_expression function to calculate results_df
+results_df = differential_expression(df_log, metadata)  # This line was added to call the function
+
+
+# Filter differentially expressed genes
+deg = results_df[results_df['adjusted_p_value'] < 0.05]
+
+
+# Step 4: Functional Annotation (Simulated Annotations)
+annotations = {
+    'gene_1': 'Pathway A',
+    'gene_2': 'Pathway B',
+    'gene_3': 'Pathway C',
+    'gene_4': 'Pathway D',
+    'gene_5': 'Pathway E',
+}
+deg['annotation'] = deg['gene'].map(annotations).fillna('Unknown')
+
+
+# Step 5: Biological Interpretation (Plotting)
+plt.figure(figsize=(10, 6))
+
+sns.scatterplot(x='gene', y='adjusted_p_value', hue='annotation', data=deg)
+plt.axhline(y=0.05, color='r', linestyle='--')
+
+plt.xlabel('Genes')
+plt.ylabel('Adjusted P-Value')
+
+plt.title('Differentially Expressed Genes')
+plt.xticks(rotation=90)
+
+plt.legend(title='Annotations')
+plt.tight_layout()
+
+plt.show()
+
+# Save results to a CSV file
+deg.to_csv('differentially_expressed_genes.csv', index=False)
+
+# Generate the Report
+report = f"""
+RNA-Seq Data Analysis Report
+
+Differentially Expressed Genes
+
+{deg[['gene', 'adjusted_p_value']]}
+
+Functional Annotations
+
+{deg[['gene', 'annotation']]}
+
+Potential Biological Interpretations
+
+The genes gene_1, gene_2, etc., are involved in pathways A, B, etc.
+These pathways are important for understanding the effect of the treatment condition.
+"""
+
+# Save the report to a text file
+with open('RNASeq_Analysis_Report.txt', 'w') as f:
+    f.write(report)
+
+print("Analysis complete. Results saved to 'differentially_expressed_genes.csv' and 'RNASeq_Analysis_Report.txt'.")
+
+
+##################################### Protein Structure Prediction. Task: Predict the 3D structure of a given protein sequence using homology modeling or threading techniques #################
+
+
+
+
+
+
+
+############################ Perform molecular docking simulations to predict the binding affinity between a protein target and a small molecule ligand #############################
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+df = pd.read_csv('polymerase_cluster-BI.csv')
+df.head()
+
+df.describe()
+
+df.info()
+
+df.isna().sum()
+
+df.columns
+
+X = df[['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+       '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22',
+       '23', '24', '25', '26', '27', '28', '29']]
+y = df[['G1', 'G2', 'G3', 'G4', 'G5',
+       'G6', 'G7', 'G8', 'G9', 'G10']]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the model : {accuracy * 100}%")
+
+# Accuracy Score
+plt.figure(figsize=(4, 4))
+plt.bar(['Accuracy'], [accuracy * 100], color='skyblue')
+plt.ylim(0, 100)
+plt.title('Model Accuracy')
+plt.ylabel('Accuracy (%)')
+plt.show()
+
+class_report = classification_report(y_test, y_pred)
+print("Classification Report :")
+print(class_report)
+
+# Confusion Matrix
+from sklearn.metrics import ConfusionMatrixDisplay
+
+# Create confusion matrix
+cm = confusion_matrix(y_test.values.argmax(axis=1), y_pred.argmax(axis=1))
+
+# Visualize confusion matrix
+plt.figure(figsize=(10, 8))
+ConfusionMatrixDisplay(confusion_matrix=cm).plot(cmap=plt.cm.Blues)
+plt.title('Confusion Matrix')
+plt.show()
+
+
+############################### Write a program for pre-processing of a text document such as stop word removal, stemming. ##########################################
+
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+
+nltk.download('stopwords')
+nltk.download('punkt')
+
+text_document = "Text processing is an essential step in natural language processing. It includes tasks like stop word removal and stemming."
+
+words = word_tokenize(text_document)
+words
+
+stop_words = set(stopwords.words('english'))
+filtered_words = [word for word in words if word.lower() not in stop_words]
+filtered_words
+
+stemmer = PorterStemmer()
+
+stemmed_words = [stemmer.stem(word) for word in filtered_words]
+stemmed_words
+
+lemmatizer = WordNetLemmatizer()
+
+
+lemmatized_words = [lemmatizer.lemmatize(word) for word in filtered_words]
+lemmatized_words
+
+
+
+######################################## mplement a program for retrieval of documents using inverted files. ############################
+
+import re
+from collections import defaultdict
+
+documents = {
+    1: "This is the first document. It contains some text.",
+    2: "The second document is longer. It also contains some text.",
+    3: "This is the third document.It is different from the first two.",
+}
+
+def preprocess_document(doc):
+    #Convert to lowercaseand tokenize
+    tokens = re.findall(r'\w+', doc.lower())
+    #remove stop words
+    stop_words = set(["is", "the", "it", "and", "some"])
+    tokens = [token for token in tokens if token not in stop_words]
+    return tokens
+
+
+inverted_index = defaultdict(list)
+
+for doc_id, doc_text in documents.items():
+    tokens = preprocess_document(doc_text)
+    for token in tokens:
+        inverted_index[token].append(doc_id)
+
+def retrieve_documents(query):
+    query_tokens = preprocess_document(query)
+    result = set()
+    for token in query_tokens:
+        if token in inverted_index:
+            result.update(inverted_index[token])
+    return list(result)
+
+query = "document cntains text"
+matching_documents = retrieve_documents(query)
+
+if matching_documents:
+    print(f"MAtching documents for query '{query}':")
+    for doc_id in matching_documents:
+        print(f"Document {doc_id}: {documents[doc_id]}")
+else:
+    print("No matching documents found.")
+
+
+
+############################# Write a program to construct a Bayesian network considering medical data. ###############################################
+
+import pandas as pd
+from pgmpy.models import BayesianNetwork
+from pgmpy.estimators import ParameterEstimator, BayesianEstimator
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.inference import VariableElimination
+
+data = pd.read_csv('heartdisease-IR.csv')
+data.head()
+
+data.tail()
+
+data.info()
+
+data.isnull().sum()
+
+data.isna().sum()
+
+data.describe()
+
+data.columns
+
+data.dtypes
+
+model = BayesianNetwork([('age', 'heartdisease'),
+                        ('Gender', 'heartdisease'),
+                        ('Family', 'heartdisease'),
+                        ('diet', 'heartdisease'),
+                        ('Lifestyle', 'heartdisease'),
+                        ('cholestrol', 'heartdisease')])
+
+model.fit(data, estimator=MaximumLikelihoodEstimator)
+
+HeartDiseasetest_infer = VariableElimination(model)
+
+q1 = HeartDiseasetest_infer.query(variables=['heartdisease'], evidence = {'diet':1})
+print(q1)
+
+q2 = HeartDiseasetest_infer.query(variables=['heartdisease'], evidence={'age' : 4})
+print(q2)
+
+q4 = HeartDiseasetest_infer.query(variables=['heartdisease'], evidence={'cholestrol': 0})
+print(q4)
+
+
+############################################### Implement e-mail spam filtering using text classification algorithm with appropriate dataset #######################################
+
+
+
+
+
+################################  Implement Agglomerative hierarchical clustering algorithm using appropriate dataset. #######################################
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.decomposition import PCA
+from scipy.cluster.hierarchy import dendrogram, linkage
+
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+n_clusters = 3
+agg_clustering = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward')
+cluster_labels = agg_clustering.fit_predict(X_pca)
+
+linked = linkage(X_pca, 'ward')
+plt.figure(figsize=(12,6))
+dendrogram(linked, orientation='top', distance_sort='descending', show_leaf_counts=True)
+plt.title("Dendrogram")
+plt.xlabel("Cluster Size")
+plt.ylabel('Distance')
+plt.show()
+
+print("Cluster Labels")
+print(cluster_labels)
+
+plt.scatter(X_pca[:,0],X_pca[:, 1], c=cluster_labels, cmap='rainbow')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('Agglomerative Hierarchical Clustering')
+plt.show()
+
